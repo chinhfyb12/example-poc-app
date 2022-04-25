@@ -21,6 +21,7 @@ target 'PocApp' do
 
   pod 'SDWebImage', :modular_headers => true
   pod 'SDWebImageWebPCoder', :modular_headers => true
+  pod 'RNFS', :path => '../node_modules/react-native-fs'
 
   target 'PocAppTests' do
     inherit! :complete

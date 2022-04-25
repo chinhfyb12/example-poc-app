@@ -5,24 +5,47 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import Video from 'react-native-video';
 import ViewShot from 'react-native-view-shot';
+import PhotoEditor from '@baronha/react-native-photo-editor';
+import RNFS from 'react-native-fs';
+
+// convert react native file system to base 64
 
 const App = () => {
   const player = useRef<any>();
   const viewShot = useRef<any>();
-  const [image, setImage] = useState<string>();
-
-  // const onCapture = (uri: string) => {
-  //   console.log('uri', uri);
-  // };
-
+  const [image, setImage] = useState<string>('');
+  const [photo, setPhoto] = useState<any>();
+  const onEdit = async () => {
+    try {
+      const path = await PhotoEditor.open({
+        path: image,
+        // path: photo.path,
+        stickers: [],
+      });
+      setPhoto({
+        ...photo,
+        path,
+      });
+      // const result = await getBase64(path);
+      // setImage(result);
+      RNFS.readFile(path.toString(), 'base64').then(res => {
+        console.log('data:image/jpeg;base64,' + res);
+      });
+    } catch (e) {
+      console.log('e', e);
+    }
+  };
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView contentInsetAdjustmentBehavior="automatic">
-        <ViewShot ref={viewShot} options={{format: 'jpg', quality: 0.9}}>
+        <ViewShot
+          ref={viewShot}
+          options={{format: 'jpg', quality: 0.9, result: 'data-uri'}}>
           <View style={styles.boxVideo}>
             <Video
               source={{
@@ -37,11 +60,36 @@ const App = () => {
         <Button onPress={() => player.current?.seek(0, 0)} title="Play" />
         <Button
           onPress={() =>
-            viewShot.current?.capture().then((uri: string) => setImage(uri))
+            viewShot.current?.capture().then((uri: string) => {
+              setImage(uri.replace(/(\r\n|\n|\r)/gm, ''));
+            })
           }
           title="Capture"
         />
-        <Image source={{uri: image}} style={{width: '100%', height: 200}} />
+        <TouchableOpacity onPress={onEdit}>
+          {photo?.path && (
+            <Image
+              style={{
+                width: '100%',
+                height: 300,
+              }}
+              source={{
+                uri: photo.path,
+              }}
+            />
+          )}
+          {image ? (
+            <Image
+              style={{
+                width: '100%',
+                height: 300,
+              }}
+              source={{
+                uri: image,
+              }}
+            />
+          ) : null}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
